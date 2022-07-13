@@ -24,6 +24,8 @@ class Connection:
         return ni.ifaddresses(interface)[ni.AF_INET][0]['addr']
 
 
+    '''
+    move to switch class
     @staticmethod
     def check_ip_address(ip):
         # pass the regular expression
@@ -33,10 +35,11 @@ class Connection:
     @staticmethod
     def check_port_number(port):
         return True if re.search(Connection.PORT_REGEX,port) else False
-
+    '''
     #close socket
     def close(self):
         self.socket.close()
+
 
     def send(self,message, _socket):
         try:
