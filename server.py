@@ -2,13 +2,13 @@ from connection import Connection
 import select
 import socket
 
-class Server(Connection):
+class SocketServer(Connection):
     # Set server u
     LISTENMODE=5
     def __init__(self,ip,port,listen_mode):
         super().__init__(ip,port)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.listen_mode=Server.LISTENMODE
+        self.listen_mode=SocketServer.LISTENMODE
         self.active_connections = [self.socket]
 
 
@@ -93,7 +93,7 @@ class Server(Connection):
 
                     # Remove from list
                     notified_socket.close()
-                    active_connections.remove(notified_socket)
+                    self.active_connections.remove(notified_socket)
         except:
             print("server failed to start")
             self.close()
@@ -107,11 +107,12 @@ class Server(Connection):
 
 
 
-def main():
-    LOCALHOST="127.0.0.1"
-    LOCALPORT=5050
-    server = Server(LOCALHOST,LOCALPORT,Server.LISTENMODE)
+def main(address):
+    LOCALHOST, LOCALPORT=address
+    server = SocketServer(LOCALHOST,LOCALPORT,SocketServer.LISTENMODE)
     server.start()
 
 if __name__ == "__main__":
-    main()
+    lhost = "127.0.0.1"
+    lport = 5050
+    main((lhost, lport))
