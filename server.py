@@ -2,24 +2,26 @@ from connection import Connection
 import select
 import socket
 
+
 class SocketServer(Connection):
     # Set server u
-    LISTENMODE=5
-    def __init__(self,ip,port,listen_mode):
-        super().__init__(ip,port)
+    LISTENMODE = 5
+
+    def __init__(self, ip, port, listen_mode=LISTENMODE):
+        super().__init__(ip, port)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.listen_mode=SocketServer.LISTENMODE
+        # rename to fit start function
+        self.listen_mode = listen_mode
         self.active_connections = [self.socket]
 
-
-
     # Start the server
-    def start(self):
+
+    def start(self, data=""):
         try:
             print("[STARTING SERVER]")
-            #bind the ip and port to the socket
-            self.socket.bind((self.ip,self.port))
-            #set listening mode
+            # bind the ip and port to the socket
+            self.socket.bind((self.ip, self.port))
+            # set listening mode
             self.socket.listen(self.listen_mode)
             while True:
 
@@ -33,7 +35,8 @@ class SocketServer(Connection):
                 #   - errors  - sockets with some exceptions
                 # This is a blocking call, code execution will "wait" here and "get" notified in case any action should be taken
                 print(f"[WATING FOR DATA OR CONNECTIONS]")
-                read_sockets, _, exception_sockets = select.select(self.active_connections, [], self.active_connections)
+                read_sockets, _, exception_sockets = select.select(
+                    self.active_connections, [], self.active_connections)
 
                 # Iterate over notified sockets
                 for notified_socket in read_sockets:
@@ -48,45 +51,34 @@ class SocketServer(Connection):
 
                         client_ip = client_address[0]
                         client_port = client_address[1]
-                        print(f"[ACCEPTED CONNECTION] {client_ip}:{client_port}")
+                        print(
+                            f"[ACCEPTED CONNECTION] {client_ip}:{client_port}")
 
                         # Add accepted socket to active connections
-                        #add the new connection
+                        # add the new connection
                         self.active_connections.append(client_socket)
-
-                        # Broadcast message to all active connections
-
-                        self.send("Welcome to the server", client_socket)
 
                     # Else existing socket is sending a message
                     else:
 
                         # Receive message
                         message = self.receive(notified_socket)
-                        print(message)
 
-                        # If client wants to exit, close connection, cleanup
-                        if message == "[REFRESH]":
-                            self.send("Refreshed", notified_socket)
-                            continue
+                        if message:
 
-                        elif message == "[EXIT]":
-                            print('Closed connection')
-                            # Remove from our list of users
-                            notified_socket.close()
-                            self.active_connections.remove(notified_socket)
-
-                            continue
-                        elif message:
-                            self.broadcast(message)
-                            print(message)
+                            if b"favicon" in message:
+                                continue
+                            else:
+                                print(message)
+                                print(f"The data is\n{data}")
+                                # self.broadcast(data)
+                                self.send(data, client_socket)
+                                notified_socket.close()
+                                self.active_connections.remove(notified_socket)
                         else:
-                            #closed connection violently, cleanup
+                            # closed connection violently, cleanup
                             notified_socket.close()
                             self.active_connections.remove(notified_socket)
-
-
-
 
                 # It's not really necessary to have this, but will handle some socket exceptions just in case
                 for notified_socket in exception_sockets:
@@ -94,23 +86,22 @@ class SocketServer(Connection):
                     # Remove from list
                     notified_socket.close()
                     self.active_connections.remove(notified_socket)
-        except:
-            print("server failed to start")
+        except Exception as e:
+            raise e
             self.close()
 
-    def broadcast(self,message):
+    def broadcast(self, message):
         # Iterate over connected clients and broadcast message
         for active_connection in self.active_connections:
             if active_connection != self.socket:
-                self.send(message,active_connection)
-
-
+                self.send(message, active_connection)
 
 
 def main(address):
-    LOCALHOST, LOCALPORT=address
-    server = SocketServer(LOCALHOST,LOCALPORT,SocketServer.LISTENMODE)
+    LOCALHOST, LOCALPORT = address
+    server = SocketServer(LOCALHOST, LOCALPORT, SocketServer.LISTENMODE)
     server.start()
+
 
 if __name__ == "__main__":
     lhost = "127.0.0.1"

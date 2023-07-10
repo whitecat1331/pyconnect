@@ -1,8 +1,10 @@
-from connection.connection import Connection
+from connection import Connection
 import sys
+
+
 class Client(Connection):
-    def __init__(self,ip,port):
-        super().__init__(ip,port)
+    def __init__(self, ip, port):
+        super().__init__(ip, port)
 
     def connect(self):
         # Connect to a given ip and port
@@ -10,9 +12,7 @@ class Client(Connection):
 
         print(self.receive(self.socket))
         # Set connection to non-blocking state, so .recv() call won;t block, just return some exception we'll handle
-        #self.socket.setblocking(False)
-
-
+        # self.socket.setblocking(False)
 
     def start(self):
         while True:
@@ -20,7 +20,7 @@ class Client(Connection):
                 message = input("Enter message to send: ")
                 # If message is not empty - send it
                 if not message:
-                    self.send("[REFRESH]",self.socket)
+                    self.send("[REFRESH]", self.socket)
                     response = self.receive(self.socket)
                 elif message == "exit":
                     self.send("[EXIT]", self.socket)
@@ -28,7 +28,7 @@ class Client(Connection):
                     sys.exit()
                 else:
                     print(f"sending {message}")
-                    self.send(message,self.socket)
+                    self.send(message, self.socket)
                     print("Waiting to receive data")
                     response = self.receive(self.socket)
                 # Print message
@@ -50,15 +50,14 @@ class Client(Connection):
                 print('Error: '.format(str(e)))
 
 
-
-
 def main():
     REMOTEHOST = "127.0.0.1"
     REMOTEPORT = 5050
 
-    client = Client(REMOTEHOST,REMOTEPORT)
+    client = Client(REMOTEHOST, REMOTEPORT)
     client.connect()
     client.start()
+
 
 if __name__ == "__main__":
     main()
